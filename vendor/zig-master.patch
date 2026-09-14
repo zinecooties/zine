@@ -1,0 +1,49 @@
+--- a/vendor/wuffs/build.zig.zon
++++ b/vendor/wuffs/build.zig.zon
+@@ -9,8 +9,8 @@
+             .hash = "N-V-__8AANEmUgA6aZZZKbfNMv6DSs5In7CDFU6nInu_Y6aY",
+         },
+         .translate_c = .{
+-            .url = "git+https://codeberg.org/ziglang/translate-c#2a6613bcc09c74296d785e660fe98d2eb310d760",
+-            .hash = "translate_c-0.0.0-Q_BUWjQ7BwAhlMt3Zf4l3Jw-y0_TOpJWgcK8rk4d0aWv",
++            .url = "git+https://codeberg.org/ziglang/translate-c#0944784e197e419433a21d4b28bfc65e48e7d514",
++            .hash = "translate_c-0.0.0-Q_BUWo5NBwBs3K0a-B1XbxEF3gFdTb75VgOE0FL-2qKL",
+         },
+     },
+     .paths = .{
+--- a/vendor/supermd/build.zig.zon
++++ b/vendor/supermd/build.zig.zon
+@@ -20,13 +20,10 @@
+             .url = "git+https://github.com/kristoff-it/ziggy#be51f4dfd95590eae7c8674d660c1f16edef116b",
+             .hash = "ziggy-0.2.0-kTg8v53yBwCAN_CrgG3Y_ngWnkUb971-w-0LdZlE8hYJ",
+         },
+-        .superhtml = .{
+-            .url = "git+https://github.com/kristoff-it/superhtml#abd86c4ba995a37b0f0559801b32b35cde8bcef9",
+-            .hash = "superhtml-0.7.0-Y7MdPPuSJgDIM8DNUQpLacP0BU9-0FousIeXbBOTKFrb",
+-        },
++        .superhtml = .{ .path = "../superhtml" },
+         .translate_c = .{
+-            .url = "git+https://codeberg.org/ziglang/translate-c#2a6613bcc09c74296d785e660fe98d2eb310d760",
+-            .hash = "translate_c-0.0.0-Q_BUWjQ7BwAhlMt3Zf4l3Jw-y0_TOpJWgcK8rk4d0aWv",
++            .url = "git+https://codeberg.org/ziglang/translate-c#0944784e197e419433a21d4b28bfc65e48e7d514",
++            .hash = "translate_c-0.0.0-Q_BUWo5NBwBs3K0a-B1XbxEF3gFdTb75VgOE0FL-2qKL",
+         },
+     },
+     .paths = .{"."},
+--- a/vendor/superhtml/src/template.zig
++++ b/vendor/superhtml/src/template.zig
+@@ -1242,12 +1242,12 @@
+         }
+
+         pub fn setContext(tpl: Template, script_ctx: RootRef) void {
+-            script_ctx.loop = if (tpl.loop_stack.getLast()) |last|
++            script_ctx.loop = if (tpl.loop_stack.last()) |last|
+                 last.iterator
+             else
+                 null;
+
+-            script_ctx.@"if" = if (tpl.if_stack.getLast()) |last|
++            script_ctx.@"if" = if (tpl.if_stack.last()) |last|
+                 last.value
+             else
+                 null;

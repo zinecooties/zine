@@ -1,0 +1,9 @@
+[submodule "vendor/wuffs"]
+	path = vendor/wuffs
+	url = https://github.com/allyourcodebase/wuffs
+[submodule "vendor/supermd"]
+	path = vendor/supermd
+	url = https://github.com/kristoff-it/supermd
+[submodule "vendor/superhtml"]
+	path = vendor/superhtml
+	url = https://github.com/kristoff-it/superhtml
