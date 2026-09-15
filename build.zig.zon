@@ -1,6 +1,6 @@
 .{
     .name = .zine,
-    .version = "0.14.0",
+    .version = "0.14.0-dev",
     .fingerprint = 0xa466bcb520a7eea2,
     .minimum_zig_version = "0.17.0-dev.1471+ff10b90bc",
     .dependencies = .{
@@ -16,28 +16,38 @@
             .url = "git+https://github.com/kristoff-it/mime#a2ed0cba3b1463217168034ffed8c1604e72598d",
             .hash = "mime-3.0.0-zwmL--0gAAByELrj57sRm2EFBRzjKLFrMgHQcs7sFZev",
         },
-        .wuffs = .{ .path = "vendor/wuffs" },
         .frameworks = .{
             .url = "git+https://code.hexops.org/hexops/xcode-frameworks.git#8a1cfb373587ea4c9bb1468b7c986462d8d4e10e",
-            .hash = "N-V-__8AALShqgXkvqYU6f__FrA22SMWmi2TXCJjNTO1m8XJ",
+            .hash = "N-V-__8AALi5qgXpmvJsC0soHMv2uX2s83RKbuLs5lPRdYgW",
             .lazy = true,
         },
-        .superhtml = .{ .path = "vendor/superhtml" },
         .zeit = .{
             .url = "git+https://github.com/rockorager/zeit#ed64c36035fe44d6372c20cbcd447b0090687167",
             .hash = "zeit-0.10.0-dev-5I6bk4i0AgANIwpoMN_iBL-OGEpyDuInvQLfrPe_FVb1",
-        },
-        .flow_syntax = .{
-            .path = "../flow-syntax",
         },
         .ziggy = .{
             .url = "git+https://github.com/kristoff-it/ziggy#be51f4dfd95590eae7c8674d660c1f16edef116b",
             .hash = "ziggy-0.2.0-kTg8v53yBwCAN_CrgG3Y_ngWnkUb971-w-0LdZlE8hYJ",
         },
-        .supermd = .{ .path = "vendor/supermd" },
         .translate_c = .{
             .url = "git+https://codeberg.org/ziglang/translate-c#0944784e197e419433a21d4b28bfc65e48e7d514",
             .hash = "translate_c-0.0.0-Q_BUWo5NBwBs3K0a-B1XbxEF3gFdTb75VgOE0FL-2qKL",
+        },
+        .wuffs = .{
+            .url = "git+https://github.com/zinecooties/wuffs#3be4c32535d1f88f8c5d6f834506b0e5f1c340b7",
+            .hash = "wuffs-0.4.0-alpha.9+3837.20240914-3CHJgY8LAAAieltfwL0gQT_SXn3ZClSuZua5MKgFkGST",
+        },
+        .superhtml = .{
+            .url = "git+https://github.com/zinecooties/superhtml#645aa09bae5f633ec3ef75bede501d3340fe85d9",
+            .hash = "superhtml-0.7.0-Y7MdPGykJgAhAzmB1NwArS3LEMP0yAQ7x8nfCSFiqtAd",
+        },
+        .supermd = .{
+            .url = "git+https://github.com/zinecooties/supermd#777f39e4aa1de7ea01beedd807d84ff426725bb9",
+            .hash = "supermd-0.1.0-3Mco3Ga5WADHDx6wDARqoi1S6HKVfTRx7tbWxqyXN7Jy",
+        },
+        .flow_syntax = .{
+            .url = "git+https://github.com/zinecooties/flow-syntax#ea1399ed4c05882dc64c456c684b3bedcbdf3650",
+            .hash = "flow_syntax-0.7.2-X8jOoQufAQC41hCocG3gW7gI6zttnORoz_Fq1ofZzVaN",
         },
     },
     .paths = .{"."},

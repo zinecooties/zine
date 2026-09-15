@@ -479,9 +479,10 @@ fn setupSnapshotTesting(
                 "snapshot",
             });
 
-            _ = b.run(&.{ "rm", "-rf", snapshot_path });
+            const clean_snapshot = b.addSystemCommand(&.{ "rm", "-rf", snapshot_path });
 
             const run_zine = b.addRunArtifact(zine_exe);
+            run_zine.step.dependOn(&clean_snapshot.step);
             run_zine.addArg("release");
             run_zine.addArg("--force");
             run_zine.addArg("--output=snapshot");
@@ -519,9 +520,10 @@ fn setupSnapshotTesting(
                 "snapshot",
             });
 
-            _ = b.run(&.{ "rm", "-rf", snapshot_path });
+            const clean_snapshot = b.addSystemCommand(&.{ "rm", "-rf", snapshot_path });
 
             const run_zine = b.addRunArtifact(zine_exe);
+            run_zine.step.dependOn(&clean_snapshot.step);
             run_zine.addArg("release");
             run_zine.addArg("--drafts");
             run_zine.addArg("--force");
@@ -743,6 +745,7 @@ fn setupReleaseStep(
 }
 
 fn getVersion(b: *std.Build, no_git_version: bool) []const u8 {
+    if (std.mem.endsWith(u8, zon.version, "-dev")) return zon.version;
     if (no_git_version) return b.fmt("{s}-dev", .{
         zon.version,
     });

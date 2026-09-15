@@ -63,6 +63,7 @@ const ClassChange = struct {
     position: usize,
     is_add: bool,
     class: []const u8,
+    is_injection: bool = false,
 
     pub fn lessThan(_: void, a: ClassChange, b: ClassChange) bool {
         return a.position < b.position;
@@ -144,40 +145,57 @@ pub fn run(
     // we don't want to free any resource from the query cache
     // defer lang.destroy();
 
-    const tree = lang.tree orelse return;
-    const cursor = try treez.Query.Cursor.create();
-    defer cursor.destroy();
-
-    {
-        const query_zone = tracy.traceNamed(@src(), "exec query");
-        defer query_zone.end();
-        cursor.execute(lang.query, tree.getRootNode());
-    }
-
     const match_zone = tracy.traceNamed(@src(), "render");
     defer match_zone.end();
 
-    cursor.execute(lang.query, tree.getRootNode());
-
     var changes: std.ArrayList(ClassChange) = .empty;
+    const CaptureContext = struct {
+        arena: Allocator,
+        changes: *std.ArrayList(ClassChange),
 
-    while (cursor.nextMatch()) |match| {
-        for (match.captures()) |capture| {
-            const range = capture.node.getRange();
-            const capture_name = lang.query.getCaptureNameForId(capture.id);
-
-            try changes.append(arena, .{
+        fn capture(
+            ctx: @This(),
+            range: treez.Range,
+            capture_name: []const u8,
+            _: u32,
+            _: usize,
+            _: i32,
+            _: u32,
+            _: *const treez.Node,
+        ) error{Stop}!void {
+            ctx.changes.appendSlice(ctx.arena, &.{ .{
                 .position = range.start_byte,
                 .is_add = true,
                 .class = capture_name,
-            });
-
-            try changes.append(arena, .{
+            }, .{
                 .position = range.end_byte,
                 .is_add = false,
                 .class = capture_name,
-            });
+            } }) catch return error.Stop;
         }
+    };
+    lang.render(
+        CaptureContext{ .arena = arena, .changes = &changes },
+        CaptureContext.capture,
+        syntax.AcceptAll(CaptureContext),
+        null,
+    ) catch |err| switch (err) {
+        error.Stop, error.OutOfMemory => return error.OutOfMemory,
+        else => return error.Unknown,
+    };
+
+    for (lang.injection_list.items) |injection| {
+        try changes.appendSlice(arena, &.{ .{
+            .position = injection.start_byte,
+            .is_add = true,
+            .class = injection.file_type.name,
+            .is_injection = true,
+        }, .{
+            .position = injection.end_byte,
+            .is_add = false,
+            .class = injection.file_type.name,
+            .is_injection = true,
+        } });
     }
 
     std.sort.insertion(ClassChange, changes.items, {}, ClassChange.lessThan);
@@ -195,6 +213,15 @@ pub fn run(
             try current_classes.getClasses(arena, &class_list);
             try printSpan(arena, w, code, current_pos, change.position, class_list.items);
             current_pos = change.position;
+        }
+
+        if (change.is_injection) {
+            if (change.is_add) {
+                try w.print("<span class=\"{f}\">", .{HtmlSafe{ .bytes = change.class }});
+            } else {
+                try w.writeAll("</span>");
+            }
+            continue;
         }
 
         if (change.is_add) {

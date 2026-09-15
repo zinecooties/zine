@@ -1,0 +1,12 @@
+---
+.title = "Injected highlighting",
+.date = .date("2020-07-06T00:00:00"),
+.layout = "index.shtml",
+---
+```zitron
+%include { const first = 123; }
+expr ::= NUMBER. {
+    const second = 456;
+}
+boolproperty ::= LARROW. { p.cur.larrow = 1; p.cur.rarrow = 0; }
+```

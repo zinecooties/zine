@@ -1,35 +1,143 @@
-name: CI
-on:
-  pull_request:
-  push:
-    branches:
-      - main
-concurrency:
-  # Cancels pending runs when a PR gets updated.
-  group: ${{ github.head_ref || github.run_id }}-${{ github.actor }}
-  cancel-in-progress: true
-permissions:
-  # Sets permission policy for `GITHUB_TOKEN`
-  contents: read
-jobs:
-  tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+name: Linux build and release
 
-    runs-on: ${{ matrix.os }}
+on:
+  push:
+    branches: [cooties]
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      ZIG_VERSION: 0.17.0-dev.2127+e90365cd5
+      ZIG_SHA256: 719f5612fddb58eefc33735696e3b53400f2794e2b5324796dc4f94e12fd5f05
+      BLOG_REVISION: f1858ab620808cbceed075a296c113072ee88a1e
     steps:
-      - name: No autocrlf
-        run: git config --global core.autocrlf false
-        
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Change if you need git info
+          fetch-depth: 0
 
-      - name: Setup Zig
-        uses: mlugg/setup-zig@v2
+      - name: Check release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          git fetch --no-tags origin "+refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          test "$(git cat-file -t "refs/tags/$RELEASE_TAG")" = tag
+          tag_commit=$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")
+          test "$tag_commit" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$tag_commit" origin/cooties
+          git for-each-ref --format='%(contents)' "refs/tags/$RELEASE_TAG" > "$RUNNER_TEMP/release-notes.txt"
 
-      - name: Build
-        run: zig build test 
-          
+      - name: Install verified Zig compiler
+        run: |
+          archive="zig-x86_64-linux-$ZIG_VERSION.tar.xz"
+          curl --fail --location --retry 3 "https://ziglang.org/builds/$archive" -o "$RUNNER_TEMP/$archive"
+          echo "$ZIG_SHA256  $RUNNER_TEMP/$archive" | sha256sum --check
+          tar -xJf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/zig-x86_64-linux-$ZIG_VERSION" >> "$GITHUB_PATH"
+          echo "ZIG_GLOBAL_CACHE_DIR=$RUNNER_TEMP/zig-cache" >> "$GITHUB_ENV"
+          test ! -e "$RUNNER_TEMP/zig-cache"
+          test ! -e zig-pkg
+          test ! -e .zig-cache
+
+      - name: Check compiler and fetch pinned dependencies
+        run: |
+          test "$(zig version)" = "$ZIG_VERSION"
+          zig build --fetch
+
+      - name: Snapshot regressions
+        run: zig build test
+
+      - name: Dependency regressions
+        run: |
+          for package in flow_syntax supermd superhtml; do
+            cp -R zig-pkg/"$package"-* "$RUNNER_TEMP/$package"
+            (cd "$RUNNER_TEMP/$package" && zig build test)
+          done
+
+      - name: Build optimized Zine with highlighting
+        run: |
+          zig build -Doptimize=fast
+          git diff --exit-code -- tests/
+
+      - name: Check out pinned blog
+        uses: actions/checkout@v4
+        with:
+          repository: mnemnion/mnemno-zine
+          ref: ${{ env.BLOG_REVISION }}
+          path: blog-check
+          persist-credentials: false
+
+      - name: Build blog
+        working-directory: blog-check
+        run: |
+          # This revision predates the blog's switch to the development build.
+          sed -i 's/\.zine_version = "0.14.0",/.zine_version = "0.14.0-dev",/' zine.ziggy
+          rm -rf public
+          ../zig-out/bin/zine release
+          test -s public/index.html
+
+      - name: Package binary and provenance
+        run: |
+          mkdir -p "$RUNNER_TEMP/zine-release"
+          tar -czf "$RUNNER_TEMP/zine-release/zine-linux-x86_64.tar.gz" -C zig-out/bin zine
+          cp build.zig.zon "$RUNNER_TEMP/zine-release/build.zig.zon"
+          python3 - <<'PY'
+          import json, os, pathlib
+          provenance = {
+              "source_repository": os.environ["GITHUB_REPOSITORY"],
+              "source_commit": os.environ["GITHUB_SHA"],
+              "source_ref": os.environ["GITHUB_REF"],
+              "compiler_version": os.environ["ZIG_VERSION"],
+              "compiler_archive_sha256": os.environ["ZIG_SHA256"],
+              "runner": "ubuntu-24.04",
+              "build_command": "zig build -Doptimize=fast",
+              "highlighting": True,
+              "blog_revision": os.environ["BLOG_REVISION"],
+              "workflow_run": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
+          }
+          path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "zine-release/provenance.json"
+          path.write_text(json.dumps(provenance, indent=2) + "\n")
+          PY
+          cd "$RUNNER_TEMP/zine-release"
+          sha256sum zine-linux-x86_64.tar.gz > zine-linux-x86_64.tar.gz.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zine-linux-x86_64
+          path: ${{ runner.temp }}/zine-release/
+
+      - uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}/release-notes.txt
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: zine-linux-x86_64
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+      - name: Publish tagged binary
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" \
+            --notes-file release-notes.txt zine-linux-x86_64.tar.gz \
+            zine-linux-x86_64.tar.gz.sha256 provenance.json build.zig.zon
