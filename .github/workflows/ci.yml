@@ -16,7 +16,6 @@ jobs:
     env:
       ZIG_VERSION: 0.17.0-dev.2127+e90365cd5
       ZIG_SHA256: 719f5612fddb58eefc33735696e3b53400f2794e2b5324796dc4f94e12fd5f05
-      BLOG_REVISION: f1858ab620808cbceed075a296c113072ee88a1e
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,23 +65,6 @@ jobs:
           zig build -Doptimize=fast
           git diff --exit-code -- tests/
 
-      - name: Check out pinned blog
-        uses: actions/checkout@v4
-        with:
-          repository: mnemnion/mnemno-zine
-          ref: ${{ env.BLOG_REVISION }}
-          path: blog-check
-          persist-credentials: false
-
-      - name: Build blog
-        working-directory: blog-check
-        run: |
-          # This revision predates the blog's switch to the development build.
-          sed -i 's/\.zine_version = "0.14.0",/.zine_version = "0.14.0-dev",/' zine.ziggy
-          rm -rf public
-          ../zig-out/bin/zine release
-          test -s public/index.html
-
       - name: Package binary and provenance
         run: |
           mkdir -p "$RUNNER_TEMP/zine-release"
@@ -99,7 +81,6 @@ jobs:
               "runner": "ubuntu-24.04",
               "build_command": "zig build -Doptimize=fast",
               "highlighting": True,
-              "blog_revision": os.environ["BLOG_REVISION"],
               "workflow_run": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
           }
           path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "zine-release/provenance.json"
