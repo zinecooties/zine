@@ -31,7 +31,7 @@ jobs:
           tag_commit=$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")
           test "$tag_commit" = "$GITHUB_SHA"
           git merge-base --is-ancestor "$tag_commit" origin/cooties
-          git for-each-ref --format='%(contents)' "refs/tags/$RELEASE_TAG" > "$RUNNER_TEMP/release-notes.txt"
+          git for-each-ref --format='%(contents:subject)%0a%0a%(contents:body)' "refs/tags/$RELEASE_TAG" > "$RUNNER_TEMP/release-notes.txt"
 
       - name: Install verified Zig compiler
         run: |

@@ -145,6 +145,14 @@ pub fn serve(project: *std.Build, opts: Options) *std.Build.Step.Run {
 }
 
 pub fn build(b: *std.Build) !void {
+    // Dependencies may inspect their own Git checkout, but must not discover Zine's.
+    const git_ceiling = try b.root.root_dir.handle.realPathFileAlloc(b.graph.io, ".", b.allocator);
+    const existing_ceilings = b.graph.environ_map.get("GIT_CEILING_DIRECTORIES");
+    try b.graph.environ_map.put("GIT_CEILING_DIRECTORIES", if (existing_ceilings) |existing|
+        b.fmt("{s}{c}{s}", .{ existing, std.fs.path.delimiter, git_ceiling })
+    else
+        git_ceiling);
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 

@@ -18,7 +18,7 @@
         },
         .frameworks = .{
             .url = "git+https://code.hexops.org/hexops/xcode-frameworks.git#8a1cfb373587ea4c9bb1468b7c986462d8d4e10e",
-            .hash = "N-V-__8AALi5qgXpmvJsC0soHMv2uX2s83RKbuLs5lPRdYgW",
+            .hash = "N-V-__8AALShqgXkvqYU6f__FrA22SMWmi2TXCJjNTO1m8XJ",
             .lazy = true,
         },
         .zeit = .{
@@ -38,12 +38,12 @@
             .hash = "wuffs-0.4.0-alpha.9+3837.20240914-3CHJgY8LAAAieltfwL0gQT_SXn3ZClSuZua5MKgFkGST",
         },
         .superhtml = .{
-            .url = "git+https://github.com/zinecooties/superhtml#645aa09bae5f633ec3ef75bede501d3340fe85d9",
-            .hash = "superhtml-0.7.0-Y7MdPGykJgAhAzmB1NwArS3LEMP0yAQ7x8nfCSFiqtAd",
+            .url = "git+https://github.com/zinecooties/superhtml#bf16df739754f36d565a6955b7e1fcdeaa79c3ac",
+            .hash = "superhtml-0.7.0-Y7MdPMyoJgDTwX9C3KMJkUJqnJ5e7QWR9h402svd7cIl",
         },
         .supermd = .{
-            .url = "git+https://github.com/zinecooties/supermd#777f39e4aa1de7ea01beedd807d84ff426725bb9",
-            .hash = "supermd-0.1.0-3Mco3Ga5WADHDx6wDARqoi1S6HKVfTRx7tbWxqyXN7Jy",
+            .url = "git+https://github.com/zinecooties/supermd#5e856dd9dae9789da7545c94992cee4a66b80f40",
+            .hash = "supermd-0.1.0-3Mco3Ga5WAAM8Hr1XYqULjCxVBDunz1bKF618wfClpbx",
         },
         .flow_syntax = .{
             .url = "git+https://github.com/zinecooties/flow-syntax#ea1399ed4c05882dc64c456c684b3bedcbdf3650",
