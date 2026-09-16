@@ -62,8 +62,15 @@ jobs:
 
       - name: Build optimized Zine with highlighting
         run: |
-          zig build -Doptimize=fast
+          zig build -Doptimize=fast -Dtarget=x86_64-linux-gnu -Dcpu=baseline
+          ./zig-out/bin/zine version
           git diff --exit-code -- tests/
+
+      - name: Smoke test optimized binary
+        working-directory: tests/rendering/injections
+        run: |
+          ../../../zig-out/bin/zine release --output="$RUNNER_TEMP/zine-smoke"
+          test -s "$RUNNER_TEMP/zine-smoke/index.html"
 
       - name: Package binary and provenance
         run: |
@@ -79,7 +86,9 @@ jobs:
               "compiler_version": os.environ["ZIG_VERSION"],
               "compiler_archive_sha256": os.environ["ZIG_SHA256"],
               "runner": "ubuntu-24.04",
-              "build_command": "zig build -Doptimize=fast",
+              "build_command": "zig build -Doptimize=fast -Dtarget=x86_64-linux-gnu -Dcpu=baseline",
+              "target": "x86_64-linux-gnu",
+              "cpu": "baseline",
               "highlighting": True,
               "workflow_run": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
           }
